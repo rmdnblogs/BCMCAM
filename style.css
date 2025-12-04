@@ -1,108 +1,36 @@
-body { 
-    font-family: 'Segoe UI', sans-serif; 
-    margin: 0; 
-    background: #222; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    height: 100vh; 
+:root{
+  --bg: #222;
+  --panel: #fff;
+  --primary: #007bff;
+  --success: #28a745;
+  --muted: #666;
 }
 
-/* Kamera full */
-.camera-container { 
-    position: relative; 
-    width: 100%; 
-    flex-grow: 1; 
-    background: #000; 
-    overflow: hidden; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Segoe UI, system-ui, -apple-system, "Helvetica Neue", Arial;}
+body{background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 0 0}
 
-video { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
+.camera-container{
+  position:relative;width:100%;flex:1;min-height:320px;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
+video{width:100%;height:100%;object-fit:cover;}
+canvas{display:none;width:100%;height:100%;object-fit:contain;}
+.video-overlay{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;pointer-events:none;}
 
-canvas { 
-    display: none; 
-    width: 100%; 
-    height: 100%; 
-    object-fit: contain; 
+.controls{
+  width:100%;max-width:720px;padding:18px;background:var(--panel);border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,.25);
 }
-
-/* Panel Kontrol */
-.controls { 
-    width: 100%; 
-    max-width: 600px; 
-    padding: 20px; 
-    background: #fff; 
-    border-radius: 20px 20px 0 0; 
-    box-sizing: border-box; 
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 10;
+label{display:block;font-size:13px;color:var(--muted);font-weight:700;margin-top:6px}
+input[type="text"]{
+  width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;margin-top:6px;font-size:16px;background:#f9f9f9;
 }
+input:focus{outline:0;border-color:var(--primary);background:#fff}
 
-label { 
-    font-size: 13px; 
-    color: #666; 
-    font-weight: bold; 
-    display: block; 
-    margin-top: 5px; 
-}
+.btn-group{display:flex;gap:10px;margin-top:14px}
+.btn{flex:1;padding:14px;border-radius:10px;border:0;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.btn:active{transform:scale(.98)}
+.btn-snap{background:var(--success)}
+.btn-dl{background:var(--primary)}
+.btn-reset{background:#6c757d}
 
-input { 
-    width: 100%; 
-    padding: 12px; 
-    margin-bottom: 5px; 
-    border: 1px solid #ccc; 
-    border-radius: 8px; 
-    font-size: 16px; 
-    box-sizing: border-box; 
-    background: #f9f9f9;
-}
-
-input:focus { 
-    border-color: #007bff; 
-    outline: none; 
-    background: #fff; 
-}
-
-/* Tombol */
-.btn-group { 
-    display: flex; 
-    gap: 10px; 
-    margin-top: 15px; 
-}
-
-button { 
-    flex: 1; 
-    padding: 15px; 
-    border: none; 
-    border-radius: 10px; 
-    font-size: 16px; 
-    font-weight: bold; 
-    cursor: pointer; 
-    color: white; 
-    transition: 0.2s; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-}
-
-button:active { 
-    transform: scale(0.96); 
-}
-
-.btn-snap { background: #28a745; }
-.btn-dl { background: #007bff; display: none; }
-.btn-reset { background: #6c757d; display: none; }
-
-.status-msg {
-    text-align: center; 
-    color: #28a745; 
-    font-weight: bold; 
-    margin-bottom: 10px; 
-    display: none;
-}
+.status-msg{display:none;text-align:center;color:var(--success);font-weight:700;margin-bottom:10px}
