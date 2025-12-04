@@ -1,5 +1,9 @@
+// app.js - camera + watermark + save + reset
+"use strict";
+
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
+const videoOverlay = document.getElementById('videoOverlay');
 const snapBtn = document.getElementById('snapBtn');
 const dlBtn = document.getElementById('dlBtn');
 const resetBtn = document.getElementById('resetBtn');
@@ -7,115 +11,149 @@ const inputName = document.getElementById('productName');
 const inputED = document.getElementById('edInput');
 const statusMsg = document.getElementById('statusMsg');
 
-let streamMedia;
+let streamMedia = null;
 
-// Inisialisasi Kamera
-async function startCamera() {
-    try {
-        streamMedia = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { exact: "environment" } }
-        });
-    } catch (err) {
-        streamMedia = await navigator.mediaDevices.getUserMedia({ video: true });
-    }
-    video.srcObject = streamMedia;
+function showStatus(text, visible = true) {
+  statusMsg.textContent = text || '';
+  statusMsg.style.display = visible ? 'block' : 'none';
 }
 
-// Waktu realtime
+// Format waktu
 function getFormattedDate() {
-    const now = new Date();
-    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-    return `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const now = new Date();
+  const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
+  return `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 }
 
-// Ambil Foto + Watermark
+// Start camera with fallback
+async function startCamera() {
+  videoOverlay.style.display = 'flex';
+  videoOverlay.textContent = 'Meminta akses kamera...';
+  try {
+    streamMedia = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } },
+      audio: false
+    });
+    video.srcObject = streamMedia;
+
+    // hide overlay when video ready
+    video.addEventListener('loadeddata', () => {
+      videoOverlay.style.display = 'none';
+    }, {once:true});
+
+    showStatus('', false);
+  } catch (err) {
+    console.error('Camera start error:', err);
+    videoOverlay.textContent = 'Kamera tidak tersedia. Pastikan permission diberikan dan device mendukung kamera.';
+    showStatus('Kamera tidak aktif', true);
+  }
+}
+
+// Capture photo and watermark
 function takePhoto() {
-    if (!inputName.value) {
-        alert("Mohon isi Nama Produk dulu!");
-        return;
-    }
+  if (!inputName.value.trim()) {
+    alert('Mohon isi Nama Produk dulu!');
+    inputName.focus();
+    return;
+  }
 
-    const context = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  // Draw current frame
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const productName = inputName.value;
-    const edText = inputED.value;
-    const timeString = getFormattedDate();
+  // Setup watermark font
+  const fontSize = Math.max(16, Math.floor(canvas.width * 0.04));
+  ctx.font = `bold ${fontSize}px Arial`;
+  const lineHeight = Math.floor(fontSize * 1.25);
 
-    const fontSize = canvas.width * 0.04;
-    context.font = `bold ${fontSize}px Arial`;
-    const lineHeight = fontSize * 1.3;
+  // Timestamp - right top
+  const timeString = getFormattedDate();
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#FFD700';
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = Math.max(1, Math.floor(fontSize / 12));
+  ctx.strokeText(timeString, canvas.width - 20, 20);
+  ctx.fillText(timeString, canvas.width - 20, 20);
 
-    // TIMESTAMP kanan atas
-    context.textAlign = "right";
-    context.textBaseline = "top";
-    context.fillStyle = "#FFD700";
-    context.strokeStyle = "black";
-    context.lineWidth = fontSize / 10;
-    context.strokeText(timeString, canvas.width - 20, 20);
-    context.fillText(timeString, canvas.width - 20, 20);
+  // Product & ED - left bottom
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  let currentY = canvas.height - 20;
+  const leftX = 20;
 
-    // PRODUK & ED kiri bawah
-    context.textAlign = "left";
-    context.textBaseline = "bottom";
+  if (inputED.value.trim()) {
+    ctx.fillStyle = '#ffcccc';
+    ctx.strokeText(inputED.value.trim(), leftX, currentY);
+    ctx.fillText(inputED.value.trim(), leftX, currentY);
+    currentY -= lineHeight;
+  }
 
-    let currentY = canvas.height - 20;
-    const leftX = 20;
+  ctx.fillStyle = 'white';
+  ctx.strokeText(inputName.value.trim(), leftX, currentY);
+  ctx.fillText(inputName.value.trim(), leftX, currentY);
 
-    if (edText) {
-        context.fillStyle = "#ffcccc";
-        context.strokeText(edText, leftX, currentY);
-        context.fillText(edText, leftX, currentY);
-        currentY -= lineHeight;
-    }
-
-    context.fillStyle = "white";
-    context.strokeText(productName, leftX, currentY);
-    context.fillText(productName, leftX, currentY);
-
-    video.style.display = 'none';
-    canvas.style.display = 'block';
-    snapBtn.style.display = 'none';
-    dlBtn.style.display = 'block';
-    resetBtn.style.display = 'block';
-    statusMsg.style.display = 'block';
+  // swap UI
+  video.style.display = 'none';
+  canvas.style.display = 'block';
+  snapBtn.style.display = 'none';
+  dlBtn.style.display = 'inline-block';
+  resetBtn.style.display = 'inline-block';
+  showStatus('✅ Foto Siap Disimpan!', true);
 }
 
-// Simpan + Reset
+// Save file and auto reset
 function downloadAndReset() {
-    let fileName = inputName.value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const link = document.createElement('a');
-    link.download = `${fileName}_${Date.now()}.jpg`;
-    link.href = canvas.toDataURL("image/jpeg", 0.85);
-    link.click();
+  const name = (inputName.value || 'gudang').replace(/[^a-z0-9_-]/gi,'_').toLowerCase();
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = `${name}_${Date.now()}.jpg`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 
-    dlBtn.innerText = "MENYIMPAN...";
-
-    setTimeout(() => {
-        resetCamera();
-        dlBtn.innerText = "SIMPAN & RESET";
-    }, 1200);
+  dlBtn.textContent = 'MENYIMPAN...';
+  setTimeout(()=> {
+    dlBtn.textContent = 'SIMPAN & RESET';
+    resetCamera();
+  }, 1000);
 }
 
 function resetCamera() {
-    video.style.display = 'block';
-    canvas.style.display = 'none';
-
-    snapBtn.style.display = 'block';
-    dlBtn.style.display = 'none';
-    resetBtn.style.display = 'none';
-    statusMsg.style.display = 'none';
-
-    inputName.value = '';
-    inputED.value = '';
-    inputName.focus();
+  video.style.display = 'block';
+  canvas.style.display = 'none';
+  snapBtn.style.display = 'inline-block';
+  dlBtn.style.display = 'none';
+  resetBtn.style.display = 'none';
+  showStatus('', false);
+  inputName.value = '';
+  inputED.value = '';
+  inputName.focus();
 }
 
-snapBtn.onclick = takePhoto;
-dlBtn.onclick = downloadAndReset;
-resetBtn.onclick = resetCamera;
+// Attach listeners
+snapBtn.addEventListener('click', takePhoto);
+dlBtn.addEventListener('click', downloadAndReset);
+resetBtn.addEventListener('click', resetCamera);
 
-startCamera();
+// Start on load
+window.addEventListener('load', () => {
+  startCamera();
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('ServiceWorker registered:', reg.scope);
+      })
+      .catch(err => {
+        console.warn('ServiceWorker registration failed:', err);
+      });
+  } else {
+    console.log('ServiceWorker not supported in this browser');
+  }
+});
