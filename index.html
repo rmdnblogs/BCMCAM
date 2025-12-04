@@ -1,52 +1,58 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>GudangCam: Auto Reset</title>
 
-    <title>BCM CAM</title>
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
 
-    <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-
-    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
-
-    <link rel="stylesheet" href="css/style.css">
+  <!-- Style -->
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-
-<div class="camera-container">
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
-</div>
-
-<div class="controls">
-    <div id="statusMsg" class="status-msg">Simpan Foto</div>
-
-    <label>Nama Produk / SKU:</label>
-    <input type="text" id="productName" placeholder="Contoh: Jarum Suntik">
-
-    <label>Expired Date (Ketik Manual):</label>
-    <input type="text" id="edInput" placeholder="Contoh: ED 12/2026 (Boleh kosong)">
-    
-    <div class="btn-group">
-        <button id="snapBtn" class="btn-snap">AMBIL FOTO</button>
-        <button id="dlBtn" class="btn-dl">SIMPAN & RESET</button>
-        <button id="resetBtn" class="btn-reset">ULANG</button>
+  <div id="app">
+    <div class="camera-container">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+      <div id="videoOverlay" class="video-overlay">Memuat kamera...</div>
     </div>
-</div>
 
-<script src="js/app.js"></script>
+    <div class="controls">
+      <div id="statusMsg" class="status-msg" aria-live="polite"></div>
 
-<script>
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js");
-}
-</script>
+      <label for="productName">Nama Produk / SKU:</label>
+      <input type="text" id="productName" placeholder="Contoh: Panadol Anak Sirup">
 
+      <label for="edInput">Expired Date (Ketik Manual):</label>
+      <input type="text" id="edInput" placeholder="Contoh: ED 12/2026 (Boleh kosong)">
+
+      <div class="btn-group">
+        <button id="snapBtn" class="btn btn-snap" type="button">AMBIL FOTO</button>
+        <button id="dlBtn" class="btn btn-dl" type="button" style="display:none">SIMPAN & RESET</button>
+        <button id="resetBtn" class="btn btn-reset" type="button" style="display:none">ULANG</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application script -->
+  <script src="./app.js" defer></script>
+
+  <!-- Service worker registration (deferred by app.js too) -->
+  <script>
+    // Minimal safe fallback if app.js didn't register
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration('./sw.js').then(reg => {
+        if (!reg) {
+          navigator.serviceWorker.register('./sw.js').catch(e => console.log('SW register fallback error:', e));
+        }
+      }).catch(()=>{/* ignore */});
+    }
+  </script>
 </body>
 </html>
