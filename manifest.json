@@ -1,7 +1,7 @@
 {
-  "name": "GudangCam: Auto Reset",
-  "short_name": "GudangCam",
-  "description": "Aplikasi kamera gudang dengan watermark otomatis dan reset cepat.",
+  "name": "bcmCam",
+  "short_name": "bcmCam",
+  "description": "Aplikasi kamera gudang dengan watermark otomatis.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
